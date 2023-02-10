@@ -1,6 +1,7 @@
 package com.egamagz.nmak.scanner
 
 import com.egamagz.nmak.exception.PortScannerError
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 import org.junit.jupiter.api.Assertions.*
@@ -19,8 +20,10 @@ class PortScannerTest {
 
     @Test
     fun `Test scan with wrong arguments`() {
-        /*assertThrows<PortScannerError> {
-            portScanner.scan(arguments = "--wrong-args")
-        }*/
+        assertThrows<PortScannerError> {
+            runBlocking {
+                portScanner.scan(arguments = "--wrong-args")
+            }
+        }
     }
 }

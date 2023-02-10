@@ -74,6 +74,49 @@ class PortScanner(
 
     fun getLastOutput() = lastOutput
 
+    suspend fun scan(
+        hosts: String = "127.0.0.1",
+        ports: String? = null,
+        arguments: String = "-sV",
+        sudo: Boolean = false,
+    ): Map<String, Any> {
+        val hostsArguments = hosts.split(" ")
+        val command = mutableListOf(nmapPath, "-oX", "-").also { list ->
+            list.addAll(hostsArguments)
+            ports?.let {
+                list.addAll(it.split(" "))
+            }
+            list.addAll(arguments.split(" "))
+        }
+
+        if (sudo)
+            command.add(0, "sudo")
+
+        val processResult = process(
+            command = command.toTypedArray(),
+            stdout = Redirect.CAPTURE,
+            charset = Charsets.UTF_8,
+            stderr = Redirect.CAPTURE,
+        ).also {
+            lastOutput = it.outputToString()
+        }
+        // TODO: GET WARNINGS AND ERRORS
+        if (processResult.resultCode != 0)
+            throw PortScannerError(processResult.outputToString())
+
+        return analyzeNmapXML(
+            nmapXMLOutput = processResult.outputToString(),
+        )
+    }
+
+    fun analyzeNmapXML(nmapXMLOutput: String): Map<String, Any> {
+        val scanResult = mutableMapOf<String, Any>()
+        println(nmapXMLOutput)
+        /*val document = nmapXMLOutput.toXmlDocument()
+        val nmaprunNode = document.getElementsByTagName("nmaprun").let { if (it.length > 0) it.item(0) else null }
+        println(nmaprunNode?.attributes?.getNamedItem("args")?.nodeValue)*/
+        return scanResult
+    }
 }
 
 fun main() {
