@@ -14,6 +14,7 @@ dependencies {
     testImplementation(kotlin("test"))
     implementation("com.github.pgreze:kotlin-process:1.4.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
 }
 
 tasks.test {
