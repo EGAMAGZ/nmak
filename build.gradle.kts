@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm") version "1.8.0"
-    application
+    //application
 }
 
 group = "com.egamagz"
@@ -25,6 +25,6 @@ kotlin {
     jvmToolchain(8)
 }
 
-application {
+/*application {
     mainClass.set("MainKt")
-}
+}*/

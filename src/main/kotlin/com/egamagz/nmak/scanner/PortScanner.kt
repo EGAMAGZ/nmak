@@ -1,6 +1,9 @@
 package com.egamagz.nmak.scanner
 
 import com.egamagz.nmak.exception.PortScannerError
+import com.egamagz.nmak.analyzer.NmapXmlAnalyzer
+import com.egamagz.nmak.model.NmapRun
+import com.egamagz.nmak.util.Util
 import com.egamagz.nmak.util.extensions.outputToString
 import com.github.pgreze.process.Redirect
 import com.github.pgreze.process.process
@@ -58,8 +61,9 @@ class PortScanner(
                 command = arrayOf(nmapPath, "-V"),
                 stdout = Redirect.CAPTURE,
                 charset = Charsets.UTF_8,
+                stderr = Redirect.CAPTURE,
             ).also {
-                lastOutput = it.output.joinToString()
+                lastOutput = it.outputToString()
             }
         }
         val output = processResult.output.find { regex.matches(it) }
@@ -79,7 +83,7 @@ class PortScanner(
         ports: String? = null,
         arguments: String = "-sV",
         sudo: Boolean = false,
-    ): Map<String, Any> {
+    ): NmapRun {
         val hostsArguments = hosts.split(" ")
         val command = mutableListOf(nmapPath, "-oX", "-").also { list ->
             list.addAll(hostsArguments)
@@ -89,9 +93,12 @@ class PortScanner(
             list.addAll(arguments.split(" "))
         }
 
-        if (sudo)
+        if (sudo) {
+            if (Util.isWindows()) {
+                throw PortScannerError("Sudo is not supported on Windows.")
+            }
             command.add(0, "sudo")
-
+        }
         val processResult = process(
             command = command.toTypedArray(),
             stdout = Redirect.CAPTURE,
@@ -109,18 +116,17 @@ class PortScanner(
         )
     }
 
-    fun analyzeNmapXML(nmapXMLOutput: String): Map<String, Any> {
-        val scanResult = mutableMapOf<String, Any>()
-        println(nmapXMLOutput)
-        /*val document = nmapXMLOutput.toXmlDocument()
-        val nmaprunNode = document.getElementsByTagName("nmaprun").let { if (it.length > 0) it.item(0) else null }
-        println(nmaprunNode?.attributes?.getNamedItem("args")?.nodeValue)*/
-        return scanResult
+    private fun analyzeNmapXML(nmapXMLOutput: String): NmapRun {
+        val analyzer = NmapXmlAnalyzer(nmapXMLOutput)
+        return analyzer.getNmapRun()
     }
 }
 
 fun main() {
     val portScanner = PortScanner()
     println(portScanner.getNmapVersion())
-
+    runBlocking {
+        val nmapRun = portScanner.scan()
+        println(nmapRun)
+    }
 }
